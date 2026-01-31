@@ -61,7 +61,7 @@ docker exec -it claude-code bash
 
 **Two-Stage Initialization Pattern:**
 1. Stage 1 (Root): Firewall setup using iptables/ipset with NET_ADMIN/NET_RAW capabilities
-2. Stage 2 (User): Dynamic UID/GID mapping, privilege drop via gosu, launch ttyd/Claude Code
+2. Stage 2 (User): Dynamic UID/GID mapping, privilege drop via gosu, launch Claude Code
 
 **Whitelist-Based Egress Firewall:**
 - DEFAULT DENY policy for all outbound traffic
@@ -110,12 +110,11 @@ This ensures files created in mounted volumes have correct ownership on the host
 - NET_ADMIN and NET_RAW capabilities required for iptables operations
 - Runs as unprivileged user after firewall setup (gosu privilege drop)
 - Credential files in /claude preserve their original permissions
+- Use sudo whitelist for docker commands, NEVER add users to docker group (root-equivalent access)
 
 ### Detailed Documentation
 
-For comprehensive details, see `claude-build/CLAUDE.md` which includes:
-- Line-by-line file references
-- TrueNAS-specific configuration
-- Troubleshooting common issues
-- Deployment verification steps
-- Alpine to Debian migration notes
+| Document | Description |
+|----------|-------------|
+| [claude-build/CLAUDE.md](claude-build/CLAUDE.md) | Technical deep-dive: line-by-line file references, architecture details, troubleshooting, deployment verification |
+| [claude-build/TRUENAS_SETUP.md](claude-build/TRUENAS_SETUP.md) | TrueNAS user/group setup: sudo whitelist configuration via GUI, UID/GID mapping, security best practices |
