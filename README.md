@@ -112,8 +112,8 @@ docker compose build && docker compose up -d
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Stage 2: User Execution (Unprivileged)                      │
-│ • Dynamic UID/GID mapping                                    │
-│ • Privilege drop via gosu                                    │
+│ • Dynamic UID/GID mapping                                   │
+│ • Privilege drop via gosu                                   │
 │ • Keep container running for interactive shell access       │
 └─────────────────────────────────────────────────────────────┘
 ```
