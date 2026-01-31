@@ -1,11 +1,16 @@
-# Quick Start: Deploy to TrueNAS
+# Quick Start: Deploy Claude Code Docker Container to TrueNAS Scale
+
+This guide walks you through deploying the Claude Code Docker container on TrueNAS Scale. The containerized Claude Code environment includes secure egress firewall, Docker Compose orchestration, and TrueNAS-specific volume mapping.
+
+**Target Platform:** TrueNAS Scale with Docker support
+**Container Base:** Debian Bookworm with Node.js 22
 
 ## Prerequisites
 ✅ Docker installed on TrueNAS
 ✅ SSH access to TrueNAS
 ✅ Files transferred to TrueNAS
 
-## 5-Step Deployment
+## 5-Step Claude Code Deployment on TrueNAS
 
 ### Step 1: Transfer Files
 ```powershell
@@ -58,7 +63,7 @@ docker compose up -d && \
 echo "✅ Deployment complete! Access via: docker exec -it claude-code bash"
 ```
 
-## Common Commands
+## Common Docker Commands for Claude Code Container
 
 ### Container Management
 ```bash
@@ -110,7 +115,7 @@ claude auth login    # Login to Claude
 claude               # Start Claude Code
 ```
 
-## Troubleshooting
+## Troubleshooting Claude Code on TrueNAS Scale
 
 ### Container won't start
 ```bash

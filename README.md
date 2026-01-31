@@ -1,6 +1,6 @@
-# Docker Containerization Projects
+# Claude Code Docker Container for TrueNAS Scale
 
-A collection of production-ready Docker containerization solutions with security-focused implementations.
+Production-ready Claude Code container for TrueNAS Scale with Docker Compose deployment. Secure, hardened containerization for running Claude Code on TrueNAS with whitelist-based firewall.
 
 ## 📦 Projects
 
@@ -16,7 +16,9 @@ A hardened Docker container for running [Claude Code](https://claude.ai/code) on
 - 💻 **Interactive shell access** - Direct access via `docker exec` for development
 - 🛠️ **Complete development environment** - Git, GitHub CLI, fzf, git-delta, and more
 
-## 🚀 Quick Start
+This Claude Code container is specifically designed for TrueNAS Scale deployments, providing a Docker-based environment for running Claude Code with enterprise security. The containerized approach ensures Claude Code runs isolated on TrueNAS with persistent configuration and workspace volumes.
+
+## 🚀 Quick Start: Deploy Claude Code on TrueNAS with Docker
 
 ### Prerequisites
 
@@ -59,7 +61,7 @@ claude auth login
 claude
 ```
 
-## 🔧 Configuration
+## 🔧 Configuration: TrueNAS Docker Setup for Claude Code
 
 ### Environment Variables
 
@@ -98,7 +100,7 @@ Then rebuild and restart:
 docker compose build && docker compose up -d
 ```
 
-## 🏗️ Architecture
+## 🏗️ Docker Container Architecture for TrueNAS
 
 ### Two-Stage Initialization
 
@@ -210,7 +212,7 @@ docker compose build --no-cache
 docker compose restart
 ```
 
-## 🐛 Troubleshooting
+## 🐛 Troubleshooting Claude Code Container on TrueNAS
 
 ### Container Won't Start
 

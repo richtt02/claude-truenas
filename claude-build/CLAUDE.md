@@ -1,4 +1,4 @@
-# CLAUDE.md - Docker Claude Code for TrueNAS Scale
+# Claude Code Docker Container Documentation for TrueNAS Scale
 
 ## Project Overview
 
