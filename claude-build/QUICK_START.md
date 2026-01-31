@@ -11,7 +11,7 @@ This guide walks you through deploying the Claude Code Docker container on TrueN
 ✅ TrueNAS user/group configured (see [TrueNAS Setup Guide](TRUENAS_SETUP.md))
 ✅ Files transferred to TrueNAS
 
-## 5-Step Claude Code Deployment on TrueNAS
+## 4-Step Claude Code Deployment on TrueNAS
 
 ### Step 1: Transfer Files
 ```powershell
@@ -25,20 +25,18 @@ ssh root@<truenas-ip>
 cd /mnt/tank1/configs/claude/docker/
 ```
 
-### Step 3: Build Base Image
+### Step 3: Build & Start Container
 ```bash
-chmod +x build-base.sh
-docker build -f Dockerfile.base -t richtt02/claude-base:latest .
-```
-⏱️ Build time: ~3-5 minutes
-
-### Step 4: Build & Start Container
-```bash
+chmod +x *.sh
 docker compose build
 docker compose up -d
 ```
 
-### Step 5: Verify
+> **Note:** The base image `richtt02/claude-base:latest` is automatically pulled from Docker Hub.
+> To build it locally instead (for auditing or customization), run:
+> `docker build -f Dockerfile.base -t richtt02/claude-base:latest .`
+
+### Step 4: Verify
 ```bash
 # Check logs
 docker compose logs -f
@@ -58,7 +56,6 @@ docker exec -it claude-code bash
 ```bash
 cd /mnt/tank1/configs/claude/docker/ && \
 chmod +x *.sh && \
-docker build -f Dockerfile.base -t richtt02/claude-base:latest . && \
 docker compose build && \
 docker compose up -d && \
 echo "✅ Deployment complete! Access via: docker exec -it claude-code bash"
@@ -77,15 +74,11 @@ docker compose build          # Rebuild derived image
 
 ### Base Image Management
 ```bash
-# Rebuild base image
-docker build -f Dockerfile.base -t richtt02/claude-base:latest .
-
-# Push to Docker Hub (optional)
-docker login
-docker push richtt02/claude-base:latest
-
-# Pull from Docker Hub (if pushed)
+# Pull latest from Docker Hub (default)
 docker pull richtt02/claude-base:latest
+
+# Or build locally (for auditing or customization)
+docker build -f Dockerfile.base -t richtt02/claude-base:latest .
 ```
 
 ### Testing
@@ -195,7 +188,7 @@ docker exec -it claude-code bash
 | Base Image | nezhar/claude-container | richtt02/claude-base |
 | OS | Alpine Linux | Debian 12 Bookworm |
 | Size | ~90MB | ~355MB |
-| Build Steps | 1 (compose build) | 2 (base + compose) |
+| Build Steps | 1 (compose build) | 1 (compose build, base auto-pulled) |
 | Compatibility | Limited | Full Anthropic support |
 
 ## Need More Help?
@@ -205,25 +198,19 @@ docker exec -it claude-code bash
 📦 **Transfer Guide:** See `TRANSFER_GUIDE.md`
 📝 **Version History:** See `CHANGELOG.md`
 
-## Optional: Push Base Image to Docker Hub
+## Building Base Image Locally (Optional)
 
-Benefits:
-- Faster deployment on new machines
-- No need to rebuild base image
-- Can be reused in other projects
+The base image is automatically pulled from Docker Hub. Build locally only if you want to:
+- Audit the image contents
+- Customize the base image
+- Contribute changes
 
 ```bash
-# One-time setup
-docker login
-# Username: richtt02
-# Password: <your-password>
+# Build base image locally
+docker build -f Dockerfile.base -t richtt02/claude-base:latest .
 
-# Push base image
-docker push richtt02/claude-base:latest
-
-# On other machines (skip base build)
-docker pull richtt02/claude-base:latest
-docker compose build
+# Then rebuild derived image
+docker compose build --no-cache
 docker compose up -d
 ```
 
@@ -255,4 +242,4 @@ docker compose restart
 
 ---
 
-**Ready to deploy!** Follow Step 1-5 above to get started.
+**Ready to deploy!** Follow Step 1-4 above to get started.

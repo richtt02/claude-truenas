@@ -29,16 +29,17 @@ cd claude-truenas/claude-build
 # Make scripts executable
 chmod +x *.sh
 
-# Build the base image (one-time, ~3-5 minutes)
-docker build -f Dockerfile.base -t richtt02/claude-base:latest .
-
-# Build and start the container
+# Build and start the container (base image pulled automatically)
 docker compose build
 docker compose up -d
 
 # Verify deployment
 docker compose logs -f
 ```
+
+> **Note:** The base image `richtt02/claude-base:latest` is automatically pulled from Docker Hub.
+> To build it locally instead (for auditing or customization), run:
+> `docker build -f Dockerfile.base -t richtt02/claude-base:latest .`
 
 ### Access the Container
 
@@ -170,7 +171,12 @@ docker compose logs -f            # View logs
 docker compose build              # Rebuild derived image
 docker compose build --no-cache   # Force complete rebuild
 
-# Update base image
+# Update base image (pull latest from Docker Hub)
+docker pull richtt02/claude-base:latest
+docker compose build --no-cache
+docker compose restart
+
+# Or build base image locally (for customization)
 docker build -f Dockerfile.base -t richtt02/claude-base:latest .
 docker compose build --no-cache
 docker compose restart

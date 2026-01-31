@@ -16,25 +16,25 @@ Docker containerization stack for running Claude Code on TrueNAS Scale with secu
 ### First-Time Setup
 
 ```bash
-# Step 1: Build base image (one-time, ~3-5 minutes)
-docker build -f Dockerfile.base -t richtt02/claude-base:latest .
-
-# Step 2: Build derived image
+# Step 1: Build derived image (base image pulled automatically)
 docker compose build
 
-# Step 3: Start container
+# Step 2: Start container
 docker compose up -d
 
-# Step 4: Verify deployment
+# Step 3: Verify deployment
 docker compose logs -f
 ```
+
+> **Note:** The base image `richtt02/claude-base:latest` is automatically pulled from Docker Hub.
+> To build it locally instead (for auditing or customization), run:
+> `docker build -f Dockerfile.base -t richtt02/claude-base:latest .`
 
 ### One-Liner Deployment
 
 ```bash
 cd /path/to/docker && \
 chmod +x *.sh && \
-docker build -f Dockerfile.base -t richtt02/claude-base:latest . && \
 docker compose build && \
 docker compose up -d && \
 docker compose logs -f
@@ -53,7 +53,12 @@ docker compose logs -f        # View logs
 docker compose build          # Rebuild derived image only
 docker compose build --no-cache  # Force complete rebuild
 
-# Update base image
+# Update base image (pull latest from Docker Hub)
+docker pull richtt02/claude-base:latest
+docker compose build --no-cache
+docker compose restart
+
+# Or build base image locally (for customization)
 docker build -f Dockerfile.base -t richtt02/claude-base:latest .
 docker compose build --no-cache
 docker compose restart
@@ -89,26 +94,27 @@ This project uses a custom Debian-based image (`richtt02/claude-base:latest`) fo
 - More complete package ecosystem (git-delta, aggregate available)
 - Matches Anthropic's devcontainer setup exactly
 
-**Building the Base Image:**
+**Using the Base Image:**
+
+The base image is published to Docker Hub and automatically pulled during `docker compose build`.
+
 ```bash
-# Build locally
+# Default: Pull from Docker Hub (automatic during docker compose build)
+docker pull richtt02/claude-base:latest
+
+# Or build locally (for auditing or customization)
 docker build -f Dockerfile.base -t richtt02/claude-base:latest .
-
-# Push to Docker Hub (requires login)
-docker login
-docker push richtt02/claude-base:latest
-
-# Or use the helper script
-chmod +x build-base.sh
-./build-base.sh         # Build only
-./build-base.sh push    # Build and push
 ```
 
 **Updating the Base Image:**
+1. Pull latest: `docker pull richtt02/claude-base:latest`
+2. Rebuild derived image: `docker compose build --no-cache`
+3. Restart: `docker compose restart`
+
+**Customizing the Base Image:**
 1. Modify Dockerfile.base
 2. Build: `docker build -f Dockerfile.base -t richtt02/claude-base:latest .`
-3. Push: `docker push richtt02/claude-base:latest`
-4. Rebuild derived image: `docker compose build --no-cache`
+3. Rebuild derived image: `docker compose build --no-cache`
 
 **Image Size:**
 - Base image: ~350MB (Debian + Node.js + all tools)

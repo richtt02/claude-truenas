@@ -18,10 +18,7 @@ A production-ready Docker container for Claude Code with whitelist-based egress 
 # Navigate to project directory
 cd claude-build
 
-# First-time setup: Build base image (one-time, ~3-5 minutes)
-docker build -f Dockerfile.base -t richtt02/claude-base:latest .
-
-# Build the derived image
+# Build the derived image (base image pulled automatically from Docker Hub)
 docker compose build
 
 # Start container
@@ -30,6 +27,10 @@ docker compose up -d
 # View logs
 docker compose logs -f
 ```
+
+> **Note:** The base image `richtt02/claude-base:latest` is automatically pulled from Docker Hub.
+> To build it locally instead (for auditing or customization), run:
+> `docker build -f Dockerfile.base -t richtt02/claude-base:latest .`
 
 ### Common Operations
 
@@ -44,7 +45,12 @@ docker compose logs -f            # View logs
 docker compose build              # Rebuild derived image only
 docker compose build --no-cache   # Force complete rebuild
 
-# Update base image
+# Update base image (pull latest from Docker Hub)
+docker pull richtt02/claude-base:latest
+docker compose build --no-cache
+docker compose restart
+
+# Or build base image locally (for customization)
 docker build -f Dockerfile.base -t richtt02/claude-base:latest .
 docker compose build --no-cache
 docker compose restart
