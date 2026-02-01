@@ -5,7 +5,7 @@ Production-ready Docker container for running [Claude Code](https://claude.ai/co
 ## Features
 
 - **Whitelist-based egress firewall** - DEFAULT DENY policy with explicit domain whitelisting
-- **Debian Bookworm base** - Anthropic-recommended OS with Node.js 22 LTS
+- **Debian Bookworm Slim base** - Node.js 25 with reduced vulnerabilities
 - **Two-stage initialization** - Root firewall setup → unprivileged user execution
 - **Dynamic UID/GID mapping** - Seamless TrueNAS filesystem permission integration
 - **Interactive shell access** - Direct access via `docker exec` for development
@@ -126,11 +126,11 @@ Then rebuild: `docker compose build && docker compose up -d`
 
 ### Base Image Contents
 
-Built on `node:22-bookworm` (~355MB):
+Built on `node:25-bookworm-slim` (~930MB with tools):
 
 | Category | Packages |
 |----------|----------|
-| Runtime | Node.js 22 LTS |
+| Runtime | Node.js 25 |
 | CLI Tools | Claude Code, GitHub CLI (gh) |
 | Security | iptables, ipset, dnsutils, iproute2 |
 | Development | git, vim, nano, zsh, fzf, git-delta |

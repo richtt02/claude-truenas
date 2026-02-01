@@ -76,7 +76,7 @@ docker exec -it claude-code bash
 - Local network auto-detected and allowed
 
 **Key Files:**
-- `Dockerfile.base`: Custom Debian Bookworm base with Node.js 22 + Claude CLI + tools
+- `Dockerfile.base`: Custom Debian Bookworm Slim base with Node.js 25 + Claude CLI + tools
 - `Dockerfile`: Derived image that adds entrypoint and firewall scripts
 - `entrypoint.sh`: Two-stage initialization (firewall → user mapping → privilege drop)
 - `init-firewall.sh`: Egress firewall setup adapted from Anthropic's devcontainer

@@ -2,10 +2,10 @@
 
 ## Project Overview
 
-Docker containerization stack for running Claude Code on TrueNAS Scale with security-focused egress filtering. Combines Debian Bookworm base (richtt02/claude-base with Node.js 22) and whitelist-based DEFAULT DENY firewall.
+Docker containerization stack for running Claude Code on TrueNAS Scale with security-focused egress filtering. Combines Debian Bookworm Slim base (richtt02/claude-base with Node.js 25) and whitelist-based DEFAULT DENY firewall.
 
 **Key Components:**
-- Base: richtt02/claude-base (Node.js 22 Debian Bookworm + Claude CLI + Anthropic Tools)
+- Base: richtt02/claude-base (Node.js 25 Debian Bookworm Slim + Claude CLI + Anthropic Tools)
 - Access: Shell access via `docker exec -it claude-code bash`
 - Security: Whitelist-based egress firewall (DEFAULT DENY)
 - Integration: Dynamic UID/GID mapping for TrueNAS filesystem permissions
@@ -80,19 +80,19 @@ docker exec -it claude-code bash
 
 This project uses a custom Debian-based image (`richtt02/claude-base:latest`) following Anthropic's official recommendations.
 
-**Base Image Contents (Debian Bookworm):**
-- Debian 12 (Bookworm) - Anthropic's recommended OS
-- Node.js 22 - Latest LTS runtime
+**Base Image Contents (Debian Bookworm Slim):**
+- Debian 12 (Bookworm Slim) - Reduced attack surface
+- Node.js 25 - Current release with fewer vulnerabilities
 - Claude Code CLI (@anthropic-ai/claude-code)
 - **Firewall tools:** iptables, ipset, dnsutils, iproute2
 - **Developer tools:** git, gh (GitHub CLI), vim, nano, zsh, fzf, git-delta
 - **Utilities:** jq, curl, gosu, procps, aggregate, man-db
 
-**Why Debian over Alpine:**
-- Official Anthropic recommendation for Claude Code
+**Why Debian Slim over Alpine:**
 - Better compatibility with Node.js native modules
 - More complete package ecosystem (git-delta, aggregate available)
-- Matches Anthropic's devcontainer setup exactly
+- Slim variant reduces image size and vulnerabilities
+- Maintains Debian package compatibility
 
 **Using the Base Image:**
 
@@ -117,8 +117,8 @@ docker build -f Dockerfile.base -t richtt02/claude-base:latest .
 3. Rebuild derived image: `docker compose build --no-cache`
 
 **Image Size:**
-- Base image: ~350MB (Debian + Node.js + all tools)
-- Derived image: ~355MB (just adds scripts)
+- Base image: ~930MB (Debian Slim + Node.js + all tools)
+- Derived image: ~930MB (just adds scripts)
 - Compare to Alpine: ~80MB base, but less compatible
 
 **Alpine to Debian Package Mapping:**
@@ -259,7 +259,7 @@ If USER_UID=0, bypasses user creation and runs as root (not recommended for prod
 ## Critical Files with Line References
 
 **Dockerfile.base:**
-- Lines 1-13: Debian Bookworm + Node.js 22 base with environment setup
+- Lines 1-13: Debian Bookworm Slim + Node.js 25 base with environment setup
 - Lines 15-45: Install core packages (git, firewall tools, shells, utilities)
 - Lines 47-55: Install GitHub CLI (gh) via official method
 - Lines 57-60: Install fzf (fuzzy finder) from official repo

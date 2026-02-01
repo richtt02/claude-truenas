@@ -3,7 +3,7 @@
 This guide walks you through deploying the Claude Code Docker container on TrueNAS Scale. The containerized Claude Code environment includes secure egress firewall, Docker Compose orchestration, and TrueNAS-specific volume mapping.
 
 **Target Platform:** TrueNAS Scale with Docker support
-**Container Base:** Debian Bookworm with Node.js 22
+**Container Base:** Debian Bookworm Slim with Node.js 25
 
 ## Prerequisites
 ✅ Docker installed on TrueNAS
@@ -183,13 +183,13 @@ docker exec -it claude-code bash
 
 ## What's Different from Alpine Version?
 
-| Aspect | Old (Alpine) | New (Debian) |
-|--------|-------------|--------------|
+| Aspect | Old (Alpine) | New (Debian Slim) |
+|--------|-------------|-------------------|
 | Base Image | nezhar/claude-container | richtt02/claude-base |
-| OS | Alpine Linux | Debian 12 Bookworm |
-| Size | ~90MB | ~355MB |
+| OS | Alpine Linux | Debian 12 Bookworm Slim |
+| Size | ~90MB | ~930MB |
 | Build Steps | 1 (compose build) | 1 (compose build, base auto-pulled) |
-| Compatibility | Limited | Full Anthropic support |
+| Compatibility | Limited | Full Node.js compatibility |
 
 ## Need More Help?
 
