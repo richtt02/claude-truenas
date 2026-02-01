@@ -7,9 +7,13 @@
 set -e
 
 # Initialize firewall (must run as root before dropping privileges)
+# SECURITY: Firewall failure is FATAL - do not run container unprotected
 if [ -x /usr/local/bin/init-firewall.sh ]; then
     echo "Initializing firewall..."
-    /usr/local/bin/init-firewall.sh || echo "WARNING: Firewall setup failed"
+    if ! /usr/local/bin/init-firewall.sh; then
+        echo "FATAL: Firewall setup failed. Refusing to run unprotected." >&2
+        exit 1
+    fi
 fi
 
 # Default to user 4000:4000 if not specified
@@ -17,6 +21,23 @@ fi
 # GID 4000 = claude
 USER_UID=${USER_UID:-4000}
 USER_GID=${USER_GID:-4000}
+
+# Validate UID/GID are numeric and in valid range (0-65534)
+validate_id() {
+    local value="$1"
+    local name="$2"
+    if ! echo "$value" | grep -qE '^[0-9]+$'; then
+        echo "FATAL: $name must be a positive integer, got: '$value'" >&2
+        exit 1
+    fi
+    if [ "$value" -gt 65534 ]; then
+        echo "FATAL: $name must be <= 65534, got: $value" >&2
+        exit 1
+    fi
+}
+
+validate_id "$USER_UID" "USER_UID"
+validate_id "$USER_GID" "USER_GID"
 
 # If running as root (UID 0), stay as root
 if [ "$USER_UID" -eq 0 ]; then

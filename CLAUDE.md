@@ -96,14 +96,21 @@ Then rebuild: `docker compose build && docker compose up -d`
 
 ### UID/GID Mapping for TrueNAS
 
-Set in `compose.yaml`:
-```yaml
-environment:
-  - USER_UID=4000  # Match TrueNAS user
-  - USER_GID=4000  # Match TrueNAS group
+**Required:** Configure in `.env` file (copy from `.env.example`):
+```bash
+cp .env.example .env
+nano .env  # Replace all <"..."> placeholders
 ```
 
-This ensures files created in mounted volumes have correct ownership on the host filesystem.
+Example configuration:
+```env
+USER_UID=4000
+USER_GID=4000
+CLAUDE_WORKSPACE_PATH=/mnt/tank1/configs/claude/claude-code/workspace
+CLAUDE_CONFIG_PATH=/mnt/tank1/configs/claude/claude-code/config
+```
+
+All variables are required (no hardcoded defaults). This ensures files created in mounted volumes have correct ownership on the host filesystem.
 
 ### Volume Structure
 

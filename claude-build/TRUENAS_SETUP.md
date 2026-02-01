@@ -1,5 +1,32 @@
 # TrueNAS User/Group Setup Guide
 
+## Quick Start with .env
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **REQUIRED:** Edit `.env` and replace ALL `<"...">` placeholders:
+   ```env
+   USER_UID=4000
+   USER_GID=4000
+   CLAUDE_WORKSPACE_PATH=/mnt/tank1/configs/claude/claude-code/workspace
+   CLAUDE_CONFIG_PATH=/mnt/tank1/configs/claude/claude-code/config
+   CODE_SERVER_CONFIG_PATH=/mnt/tank1/configs/claude/code-server
+   SECURE_PASSWORD=your-secure-password
+   ```
+
+3. Create TrueNAS user with matching UID/GID (see detailed steps below)
+
+4. Set directory ownership to match:
+   ```bash
+   chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/workspace
+   chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/config
+   ```
+
+---
+
 ## Overview
 
 This guide explains how to create and configure a dedicated TrueNAS user/group for managing the Claude Code Docker container. Proper user setup is critical for:
@@ -64,6 +91,7 @@ passwd claude
 
 **Notes:**
 - UID/GID 4000 is chosen to avoid conflicts with standard system users
+- Use the same UID/GID values you set in your `.env` file
 - You can use any UID/GID >= 1000, just ensure it matches across all configurations
 - The `-m` flag creates a home directory at `/home/claude`
 - The `-s /bin/bash` gives the user a proper shell for interactive use
@@ -167,7 +195,8 @@ Create directories for the container volumes and set correct ownership:
 mkdir -p /mnt/tank1/configs/claude/claude-code/workspace
 mkdir -p /mnt/tank1/configs/claude/claude-code/config
 
-# Set ownership (UID:GID must match container environment variables)
+# Set ownership (use USER_UID/USER_GID values from your .env file)
+# Default is 4000:4000 - adjust if you changed values in .env
 chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/workspace
 chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/config
 
@@ -191,23 +220,32 @@ rm /mnt/tank1/configs/claude/claude-code/workspace/test.txt
 exit
 ```
 
-### Step 4: Configure compose.yaml
+### Step 4: Configure .env File
 
-Edit your `compose.yaml` to set the UID/GID environment variables:
+**REQUIRED:** Copy `.env.example` to `.env` and configure all values:
 
-```yaml
-# Security Note: Set USER_UID and USER_GID to match your TrueNAS user
-# For user creation and permission setup, see TRUENAS_SETUP.md
-environment:
-  - CLAUDE_CONFIG_DIR=/claude
-  - TERM=xterm-256color
-  - USER_UID=4000  # Must match TrueNAS user UID
-  - USER_GID=4000  # Must match TrueNAS user GID
+```bash
+cp .env.example .env
+nano .env  # Replace ALL <"..."> placeholders
 ```
 
-**Important:** The UID/GID values here MUST match:
-1. The UID/GID used when creating the TrueNAS user (Step 1)
-2. The ownership of the volume directories (Step 3)
+Example `.env` configuration:
+
+```env
+USER_UID=4000
+USER_GID=4000
+CLAUDE_WORKSPACE_PATH=/mnt/tank1/configs/claude/claude-code/workspace
+CLAUDE_CONFIG_PATH=/mnt/tank1/configs/claude/claude-code/config
+CODE_SERVER_CONFIG_PATH=/mnt/tank1/configs/claude/code-server
+SECURE_PASSWORD=your-secure-password
+```
+
+The `compose.yaml` reads these values via `${VAR}` syntax (no defaults - all values required).
+
+**Important:** The UID/GID values MUST match across:
+1. Your `.env` file
+2. The TrueNAS user created in Step 1
+3. The ownership of volume directories (Step 3)
 
 ### Step 5: Setup SSH Access (Optional but Recommended)
 

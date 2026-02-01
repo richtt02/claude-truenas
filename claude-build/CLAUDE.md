@@ -76,6 +76,32 @@ docker compose build && docker compose up -d
 docker exec -it claude-code bash
 ```
 
+## Environment Configuration
+
+**REQUIRED:** Copy `.env.example` to `.env` and configure all values before starting:
+
+```bash
+cp .env.example .env
+nano .env  # Replace all <"..."> placeholders with your values
+```
+
+**Variables (all required):**
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `USER_UID` | 4000 | Container user UID (match TrueNAS user) |
+| `USER_GID` | 4000 | Container group GID (match TrueNAS group) |
+| `CLAUDE_WORKSPACE_PATH` | /mnt/tank1/.../workspace | Host path for /workspace |
+| `CLAUDE_CONFIG_PATH` | /mnt/tank1/.../config | Host path for /claude |
+| `CODE_SERVER_CONFIG_PATH` | /mnt/tank1/.../code-server | Host path for code-server |
+| `SECURE_PASSWORD` | your-password | Code-server password |
+
+**How It Works:**
+- Docker Compose reads `.env` automatically from the stack directory
+- All variables are required (no hardcoded defaults in compose.yaml)
+- Dockge also reads `.env` files automatically
+- Container will fail to start without properly configured `.env` file
+
 ## Custom Base Image
 
 This project uses a custom Debian-based image (`richtt02/claude-base:latest`) following Anthropic's official recommendations.
@@ -226,11 +252,10 @@ Enables seamless file permission integration with TrueNAS host filesystem:
 - Creates `claude` user/group with specified IDs
 
 **TrueNAS Integration:**
-Set environment variables in compose.yaml:
-```yaml
-environment:
-  - USER_UID=4000
-  - USER_GID=4000
+Set values in `.env` file (or override in compose.yaml):
+```env
+USER_UID=4000
+USER_GID=4000
 ```
 
 **How It Works (entrypoint.sh:42-50):**
@@ -245,12 +270,12 @@ If USER_UID=0, bypasses user creation and runs as root (not recommended for prod
 
 ### Volume Mount Structure
 
-**`/workspace` (compose.yaml:25):**
+**`/workspace` (compose.yaml:47):**
 - Working directory for projects and code
 - Mounted from TrueNAS host (e.g., `/mnt/tank1/configs/claude/claude-code/workspace`)
 - Files created automatically have correct ownership (USER_UID:USER_GID)
 
-**`/claude` (compose.yaml:26):**
+**`/claude` (compose.yaml:48):**
 - Configuration and credential storage (CLAUDE_CONFIG_DIR)
 - Contains API keys, session tokens, settings
 - Ownership set on directory only (entrypoint.sh:54-59), not recursively
@@ -289,9 +314,9 @@ If USER_UID=0, bypasses user creation and runs as root (not recommended for prod
 - Lines 163-178: Verification tests (example.com blocked, api.github.com allowed)
 
 **compose.yaml:**
-- Lines 18-20: Required capabilities (NET_ADMIN, NET_RAW) for firewall setup
-- Lines 21-23: Environment variables (CLAUDE_CONFIG_DIR, TERM)
-- Lines 24-26: Volume mounts (/workspace for projects, /claude for config)
+- Lines 36-38: Required capabilities (NET_ADMIN, NET_RAW) for firewall setup
+- Lines 41-45: Environment variables (CLAUDE_CONFIG_DIR, TERM, USER_UID, USER_GID)
+- Lines 46-48: Volume mounts (/workspace for projects, /claude for config)
 
 ## TrueNAS-Specific Configuration
 
@@ -309,20 +334,27 @@ pw useradd claude -u 4000 -g claude -m -s /bin/bash -c "Claude Code Container Ma
 # See TRUENAS_SETUP.md for complete sudoers configuration
 ```
 
-### Setting UID/GID in compose.yaml
+### Setting UID/GID via .env File
 
-Edit compose.yaml and add environment variables:
-```yaml
-environment:
-  - CLAUDE_CONFIG_DIR=/claude
-  - TERM=xterm-256color
-  - USER_UID=4000  # Match TrueNAS user UID
-  - USER_GID=4000  # Match TrueNAS user GID
+**REQUIRED:** Copy `.env.example` to `.env` and configure:
+```bash
+cp .env.example .env
+nano .env  # Replace all <"..."> placeholders
 ```
+
+Example configuration matching your TrueNAS user:
+```env
+USER_UID=4000
+USER_GID=4000
+CLAUDE_WORKSPACE_PATH=/mnt/tank1/configs/claude/claude-code/workspace
+CLAUDE_CONFIG_PATH=/mnt/tank1/configs/claude/claude-code/config
+```
+
+The compose.yaml reads these values via `${VAR}` syntax (no defaults - all values required).
 
 ### Adjusting Volume Paths
 
-Modify compose.yaml:24-26 to match your TrueNAS pool:
+Modify compose.yaml:46-48 to match your TrueNAS pool:
 ```yaml
 volumes:
   - /mnt/YOUR_POOL/path/to/workspace:/workspace:rw
@@ -331,8 +363,9 @@ volumes:
 
 ### Setting Host Filesystem Ownership
 
-On TrueNAS host (match UID/GID from container):
+On TrueNAS host (use the UID/GID values from your `.env` file):
 ```bash
+# Default is 4000:4000 - adjust if you changed USER_UID/USER_GID in .env
 chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/workspace
 chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/config
 ```
@@ -436,7 +469,7 @@ docker exec -it claude-code bash
 **Cause:** Missing NET_ADMIN or NET_RAW capabilities
 
 **Solution:**
-Ensure compose.yaml:16-18 includes:
+Ensure compose.yaml:36-38 includes:
 ```yaml
 cap_add:
   - NET_ADMIN

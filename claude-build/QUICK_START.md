@@ -25,9 +25,15 @@ ssh root@<truenas-ip>
 cd /mnt/tank1/configs/claude/docker/
 ```
 
-### Step 3: Build & Start Container
+### Step 3: Configure Environment (REQUIRED)
 ```bash
 chmod +x *.sh
+
+# Copy and configure environment file (REQUIRED - no defaults)
+cp .env.example .env
+nano .env  # Replace ALL <"..."> placeholders with your values
+
+# Build and start
 docker compose build
 docker compose up -d
 ```
@@ -134,14 +140,13 @@ docker exec claude-code iptables -L -v -n
 # Check container UID/GID
 docker exec claude-code id
 
-# Fix host permissions
-chown -R 1000:1000 /mnt/tank1/configs/claude/claude-code/workspace
-chown -R 1000:1000 /mnt/tank1/configs/claude/claude-code/config
+# Fix host permissions (use USER_UID/USER_GID from your .env)
+chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/workspace
+chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/config
 
-# Or set in compose.yaml
-# environment:
-#   - USER_UID=4000
-#   - USER_GID=4000
+# Verify .env file has correct values:
+# USER_UID=4000
+# USER_GID=4000
 ```
 
 ### Web terminal not accessible
@@ -161,6 +166,7 @@ docker exec -it claude-code bash
 ├── entrypoint.sh                ← Container initialization
 ├── init-firewall.sh             ← Firewall setup
 ├── compose.yaml                 ← Docker Compose config
+├── .env.example                 ← Environment template (copy to .env)
 ├── build-base.sh                ← Base image build helper
 ├── CLAUDE.md                    ← Full documentation
 ├── IMPLEMENTATION_SUMMARY.md    ← Deployment guide

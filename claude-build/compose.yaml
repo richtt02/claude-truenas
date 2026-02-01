@@ -1,16 +1,30 @@
 # Claude Code with Firewall for TrueNAS Scale (Dockge)
 # Access via: docker exec -it claude-code bash
 #
+# REQUIRED: Copy .env.example to .env and configure before starting
+#
 # Files required in the same directory as this compose.yaml:
 # - Dockerfile
 # - entrypoint.sh
 # - init-firewall.sh
-#
-# Volume paths can be customized via environment variables:
-#   export CLAUDE_WORKSPACE_PATH=/your/path/to/workspace
-#   export CLAUDE_CONFIG_PATH=/your/path/to/config
+# - .env (copy from .env.example and configure)
 
 services:
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    environment:
+      - PUID=${USER_UID}
+      - PGID=${USER_GID}
+      - TZ=CST
+      - PASSWORD=${SECURE_PASSWORD}
+      - DEFAULT_WORKSPACE=/config/workspace
+    volumes:
+      - ${CODE_SERVER_CONFIG_PATH}:/config
+    ports:
+      - 8443:8443
+    restart: unless-stopped
+##################################
   claude-code:
     build:
       context: .
@@ -27,24 +41,27 @@ services:
     environment:
       - CLAUDE_CONFIG_DIR=/claude
       - TERM=xterm-256color
-      - USER_UID=4000  # Match TrueNAS user UID
-      - USER_GID=4000  # Match TrueNAS user GID
+      - USER_UID=${USER_UID}
+      - USER_GID=${USER_GID}
     volumes:
-      - ${CLAUDE_WORKSPACE_PATH:-/mnt/tank1/configs/claude/claude-code/workspace}:/workspace:rw
-      - ${CLAUDE_CONFIG_PATH:-/mnt/tank1/configs/claude/claude-code/config}:/claude:rw
+      - ${CLAUDE_WORKSPACE_PATH}:/workspace:rw
+      - ${CLAUDE_CONFIG_PATH}:/claude:rw
     working_dir: /workspace
     # Resource limits to prevent runaway processes
     deploy:
       resources:
         limits:
-          cpus: '4'
+          cpus: "8"
           memory: 8G
         reservations:
-          cpus: '1'
+          cpus: "2"
           memory: 2G
     # Health check to verify container is responsive
     healthcheck:
-      test: ["CMD", "claude", "--version"]
+      test:
+        - CMD
+        - claude
+        - --version
       interval: 60s
       timeout: 10s
       retries: 3
