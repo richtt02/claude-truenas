@@ -10,7 +10,7 @@ This repository contains Docker containerization projects. Currently includes:
 
 ## Project: claude-build
 
-A production-ready Docker container for Claude Code with whitelist-based egress firewall, designed for TrueNAS Scale deployment.
+A production-ready Docker container for Claude Code with integrated VS Code (code-server) and whitelist-based egress firewall, designed for TrueNAS Scale deployment.
 
 ### Build Commands
 
@@ -71,14 +71,15 @@ docker exec -it claude-code bash
 
 **Whitelist-Based Egress Firewall:**
 - DEFAULT DENY policy for all outbound traffic
-- Whitelisted domains: Claude API, npm registry, GitHub, Sentry, Statsig
+- Whitelisted domains: Claude API, npm registry, GitHub, Sentry, Statsig, Open VSX
 - DNS resolution converts domains to IPs stored in ipset
 - Local network auto-detected and allowed
+- Port 8443 inbound allowed for VS Code web UI
 
 **Key Files:**
-- `Dockerfile.base`: Custom Debian Bookworm Slim base with Node.js 25 + Claude CLI + tools
+- `Dockerfile.base`: Custom Debian Bookworm Slim base with Node.js 25 + Claude CLI + code-server + tools
 - `Dockerfile`: Derived image that adds entrypoint and firewall scripts
-- `entrypoint.sh`: Two-stage initialization (firewall → user mapping → privilege drop)
+- `entrypoint.sh`: Two-stage initialization (firewall → user mapping → code-server → privilege drop)
 - `init-firewall.sh`: Egress firewall setup adapted from Anthropic's devcontainer
 - `compose.yaml`: Docker Compose configuration with NET_ADMIN/NET_RAW capabilities
 
@@ -108,6 +109,8 @@ USER_UID=4000
 USER_GID=4000
 CLAUDE_WORKSPACE_PATH=/mnt/tank1/configs/claude/claude-code/workspace
 CLAUDE_CONFIG_PATH=/mnt/tank1/configs/claude/claude-code/config
+CODE_SERVER_CONFIG_PATH=/mnt/tank1/configs/claude/code-server
+SECURE_PASSWORD=your-password
 ```
 
 All variables are required (no hardcoded defaults). This ensures files created in mounted volumes have correct ownership on the host filesystem.
@@ -116,6 +119,13 @@ All variables are required (no hardcoded defaults). This ensures files created i
 
 - `/workspace` - Working directory for projects (mounted from host)
 - `/claude` - Configuration and credentials (CLAUDE_CONFIG_DIR, mounted from host)
+- `/home/claude/.config/code-server` - VS Code settings and extensions
+
+### Access
+
+- **VS Code Web UI:** `http://<host>:8443` (login with SECURE_PASSWORD)
+- **Interactive Shell:** `docker exec -it claude-code bash`
+- **Claude in VS Code:** Open terminal in VS Code and run `claude`
 
 ### Security Notes
 

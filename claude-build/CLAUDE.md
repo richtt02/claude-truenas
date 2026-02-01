@@ -5,11 +5,12 @@
 Docker containerization stack for running Claude Code on TrueNAS Scale with security-focused egress filtering. Combines Debian Bookworm Slim base (richtt02/claude-base with Node.js 25) and whitelist-based DEFAULT DENY firewall.
 
 **Key Components:**
-- Base: richtt02/claude-base (Node.js 25 Debian Bookworm Slim + Claude CLI + Anthropic Tools)
-- Access: Shell access via `docker exec -it claude-code bash`
+- Base: richtt02/claude-base (Node.js 25 Debian Bookworm Slim + Claude CLI + code-server + Anthropic Tools)
+- VS Code: Browser-based IDE at `http://<host>:8443`
+- Access: Shell access via `docker exec -it claude-code bash` or VS Code terminal
 - Security: Whitelist-based egress firewall (DEFAULT DENY)
 - Integration: Dynamic UID/GID mapping for TrueNAS filesystem permissions
-- Initialization: Two-stage (firewall setup as root → privilege drop to user)
+- Initialization: Two-stage (firewall setup as root → code-server start → privilege drop to user)
 
 ## Build & Deployment Commands
 
@@ -73,6 +74,11 @@ docker compose build && docker compose up -d
 
 **Access Container:**
 ```bash
+# VS Code web interface (recommended)
+# Open browser: http://<host>:8443
+# Login with SECURE_PASSWORD from .env
+
+# Or via shell
 docker exec -it claude-code bash
 ```
 
@@ -110,6 +116,7 @@ This project uses a custom Debian-based image (`richtt02/claude-base:latest`) fo
 - Debian 12 (Bookworm Slim) - Reduced attack surface
 - Node.js 25 - Current release with fewer vulnerabilities
 - Claude Code CLI (@anthropic-ai/claude-code)
+- code-server 4.96.4 (VS Code in browser)
 - **Firewall tools:** iptables, ipset, dnsutils, iproute2
 - **Developer tools:** git, gh (GitHub CLI), vim, nano, zsh, fzf, git-delta
 - **Utilities:** jq, curl, gosu, procps, aggregate, man-db
@@ -143,8 +150,8 @@ docker build -f Dockerfile.base -t richtt02/claude-base:latest .
 3. Rebuild derived image: `docker compose build --no-cache`
 
 **Image Size:**
-- Base image: ~930MB (Debian Slim + Node.js + all tools)
-- Derived image: ~930MB (just adds scripts)
+- Base image: ~1.7GB (Debian Slim + Node.js + code-server + all tools)
+- Derived image: ~1.7GB (just adds scripts)
 - Compare to Alpine: ~80MB base, but less compatible
 
 **Alpine to Debian Package Mapping:**
@@ -222,12 +229,16 @@ Implements DEFAULT DENY security model adapted from Anthropic's official devcont
 2. IPs added to `allowed-domains` ipset (init-firewall.sh:129-132)
 3. iptables rule matches outbound traffic against ipset (init-firewall.sh:154)
 
-**Whitelisted Domains (init-firewall.sh:107-114):**
+**Whitelisted Domains (init-firewall.sh:112-122):**
 - `api.anthropic.com` - Claude API
 - `registry.npmjs.org` - npm package downloads
 - `sentry.io` + `o1137031.ingest.sentry.io` - error reporting
 - `statsig.anthropic.com` + `statsig.com` - feature flags
+- `open-vsx.org` + `www.open-vsx.org` - VS Code extensions
 - GitHub IPs (fetched from api.github.com/meta) (init-firewall.sh:82-97)
+
+**Inbound Traffic:**
+- Port 8443 allowed for VS Code web UI access (init-firewall.sh:77-79)
 
 **Adding New Domains:**
 Edit init-firewall.sh:107-114 and add domain to `ALLOWED_DOMAINS` list:
@@ -270,16 +281,21 @@ If USER_UID=0, bypasses user creation and runs as root (not recommended for prod
 
 ### Volume Mount Structure
 
-**`/workspace` (compose.yaml:47):**
+**`/workspace` (compose.yaml:38):**
 - Working directory for projects and code
 - Mounted from TrueNAS host (e.g., `/mnt/tank1/configs/claude/claude-code/workspace`)
 - Files created automatically have correct ownership (USER_UID:USER_GID)
 
-**`/claude` (compose.yaml:48):**
+**`/claude` (compose.yaml:39):**
 - Configuration and credential storage (CLAUDE_CONFIG_DIR)
 - Contains API keys, session tokens, settings
-- Ownership set on directory only (entrypoint.sh:54-59), not recursively
+- Ownership set on directory only, not recursively
 - Preserves credential file permissions created by Claude CLI
+
+**`/home/claude/.config/code-server` (compose.yaml:40):**
+- VS Code settings, extensions, and user data
+- Mounted from TrueNAS host (e.g., `/mnt/tank1/configs/claude/code-server`)
+- Persists VS Code customizations across container restarts
 
 ## Critical Files with Line References
 
@@ -406,27 +422,32 @@ After deployment, verify everything is working correctly:
 # 1. Container is running
 docker ps | grep claude-code
 
-# 2. Firewall blocks example.com (should FAIL)
+# 2. VS Code web UI accessible
+# Open browser: http://<host>:8443
+# Login with SECURE_PASSWORD from .env
+
+# 3. Firewall blocks example.com (should FAIL)
 docker exec claude-code curl -sf --connect-timeout 3 https://example.com
 
-# 3. Firewall allows api.github.com (should SUCCEED)
+# 4. Firewall allows api.github.com (should SUCCEED)
 docker exec claude-code curl -sf --connect-timeout 3 https://api.github.com
 
-# 4. Claude CLI is functional
+# 5. Claude CLI is functional (run in VS Code terminal or shell)
 docker exec claude-code claude --version
 
-# 5. UID/GID mapping is correct
+# 6. UID/GID mapping is correct
 docker exec claude-code id
 
-# 6. Interactive shell access works
+# 7. Interactive shell access works
 docker exec -it claude-code bash
 ```
 
 **Success Indicators:**
 - ✅ Container shows "Up" status in `docker ps`
+- ✅ VS Code loads at `http://<host>:8443`
 - ✅ Firewall blocks example.com (curl fails with connection error)
 - ✅ Firewall allows api.github.com (curl succeeds)
-- ✅ Claude CLI shows version number
+- ✅ Claude CLI shows version number (in VS Code terminal or shell)
 - ✅ Container user has correct UID/GID
 - ✅ Interactive shell access works
 - ✅ Files created in /workspace have correct ownership

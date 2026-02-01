@@ -53,7 +53,11 @@ docker exec claude-code curl -sf --connect-timeout 3 https://example.com
 # Test firewall (should SUCCEED)
 docker exec claude-code curl -sf --connect-timeout 3 https://api.github.com
 
-# Access container
+# Access VS Code web UI
+# Open browser: http://<truenas-ip>:8443
+# Login with SECURE_PASSWORD from your .env file
+
+# Or access container via shell
 docker exec -it claude-code bash
 ```
 
@@ -64,7 +68,7 @@ cd /mnt/tank1/configs/claude/docker/ && \
 chmod +x *.sh && \
 docker compose build && \
 docker compose up -d && \
-echo "✅ Deployment complete! Access via: docker exec -it claude-code bash"
+echo "✅ Deployment complete! Access VS Code at http://<truenas-ip>:8443"
 ```
 
 ## Common Docker Commands for Claude Code Container
@@ -107,12 +111,16 @@ docker exec -it claude-code bash
 
 ### Claude Code Setup
 ```bash
-# Interactive shell
-docker exec -it claude-code bash
-
-# Inside container
+# Option 1: Via VS Code (recommended)
+# Open browser: http://<truenas-ip>:8443
+# Open terminal in VS Code (Ctrl+`)
 claude auth login    # Login to Claude
 claude               # Start Claude Code
+
+# Option 2: Via shell
+docker exec -it claude-code bash
+claude auth login
+claude
 ```
 
 ## Troubleshooting Claude Code on TrueNAS Scale
@@ -149,13 +157,19 @@ chown -R 4000:4000 /mnt/tank1/configs/claude/claude-code/config
 # USER_GID=4000
 ```
 
-### Web terminal not accessible
+### VS Code not accessible at port 8443
 ```bash
 # Check container is running
 docker ps | grep claude-code
 
-# Check container is accessible
-docker exec -it claude-code bash
+# Check code-server is running inside container
+docker exec claude-code ps aux | grep code-server
+
+# Check logs for code-server startup
+docker logs claude-code | grep -i code-server
+
+# Verify SECURE_PASSWORD is set in .env
+grep SECURE_PASSWORD .env
 ```
 
 ## File Structure
@@ -176,16 +190,18 @@ docker exec -it claude-code bash
 
 /mnt/tank1/configs/claude/claude-code/
 ├── workspace/                   ← Your projects (mounted to /workspace)
-└── config/                      ← Claude config (mounted to /claude)
+├── config/                      ← Claude config (mounted to /claude)
+└── code-server/                 ← VS Code settings (mounted to /home/claude/.config/code-server)
 ```
 
 ## Success Indicators
 
 ✅ Container running: `docker ps | grep claude-code`
+✅ VS Code accessible: `http://<truenas-ip>:8443` loads login page
 ✅ Shell access: `docker exec -it claude-code bash` works
 ✅ Firewall blocking: `curl https://example.com` fails
 ✅ Firewall allowing: `curl https://api.github.com` succeeds
-✅ Claude CLI: `claude --version` shows version
+✅ Claude CLI: `claude --version` shows version (in VS Code terminal or shell)
 
 ## What's Different from Alpine Version?
 
@@ -193,7 +209,8 @@ docker exec -it claude-code bash
 |--------|-------------|-------------------|
 | Base Image | nezhar/claude-container | richtt02/claude-base |
 | OS | Alpine Linux | Debian 12 Bookworm Slim |
-| Size | ~90MB | ~930MB |
+| Size | ~90MB | ~1.7GB |
+| VS Code | Separate container | Integrated (port 8443) |
 | Build Steps | 1 (compose build) | 1 (compose build, base auto-pulled) |
 | Compatibility | Limited | Full Node.js compatibility |
 

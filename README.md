@@ -4,11 +4,12 @@ Production-ready Docker container for running [Claude Code](https://claude.ai/co
 
 ## Features
 
+- **Integrated VS Code (code-server)** - Browser-based IDE at `http://<host>:8443`
 - **Whitelist-based egress firewall** - DEFAULT DENY policy with explicit domain whitelisting
 - **Debian Bookworm Slim base** - Node.js 25 with reduced vulnerabilities
 - **Two-stage initialization** - Root firewall setup → unprivileged user execution
 - **Dynamic UID/GID mapping** - Seamless TrueNAS filesystem permission integration
-- **Interactive shell access** - Direct access via `docker exec` for development
+- **Single container architecture** - Claude CLI + VS Code sharing the same filesystem
 - **Complete dev environment** - Git, GitHub CLI, fzf, git-delta, and more
 
 ## Quick Start
@@ -44,6 +45,10 @@ docker compose logs -f
 ### Access the Container
 
 ```bash
+# VS Code web interface
+# Open browser to: http://<host>:8443
+# Login with SECURE_PASSWORD from your .env file
+
 # Interactive shell
 docker exec -it claude-code bash
 
@@ -52,26 +57,30 @@ claude auth login
 claude
 ```
 
+**Note:** The `claude` command is available in VS Code's integrated terminal.
+
 ## Configuration
 
 ### Environment Variables
 
-Edit `compose.yaml` to customize:
+Configure in `.env` file (copy from `.env.example`):
 
-```yaml
-environment:
-  - CLAUDE_CONFIG_DIR=/claude      # Configuration directory
-  - TERM=xterm-256color            # Terminal type
-  - USER_UID=4000                  # Match host user UID
-  - USER_GID=4000                  # Match host group GID
+```env
+USER_UID=4000                                           # Match host user UID
+USER_GID=4000                                           # Match host group GID
+CLAUDE_WORKSPACE_PATH=/mnt/tank1/.../workspace          # Host workspace path
+CLAUDE_CONFIG_PATH=/mnt/tank1/.../config                # Claude config path
+CODE_SERVER_CONFIG_PATH=/mnt/tank1/.../code-server      # VS Code settings path
+SECURE_PASSWORD=your-password                           # VS Code login password
 ```
 
 ### Volume Mounts
 
 ```yaml
 volumes:
-  - /your/workspace/path:/workspace:rw    # Projects directory
-  - /your/config/path:/claude:rw          # Claude configuration
+  - ${CLAUDE_WORKSPACE_PATH}:/workspace:rw                          # Projects directory
+  - ${CLAUDE_CONFIG_PATH}:/claude:rw                                # Claude configuration
+  - ${CODE_SERVER_CONFIG_PATH}:/home/claude/.config/code-server:rw  # VS Code settings
 ```
 
 ### Adding Whitelisted Domains
@@ -90,6 +99,22 @@ Then rebuild: `docker compose build && docker compose up -d`
 
 ## Architecture
 
+### Container Architecture
+
+```
+┌─────────────────────────────────────────┐
+│  claude-code container                  │
+│                                         │
+│  ┌─────────────┐  ┌──────────────┐      │
+│  │ code-server │  │ Claude CLI   │      │
+│  │ (port 8443) │  │ (terminal)   │      │
+│  └─────────────┘  └──────────────┘      │
+│                                         │
+│  /workspace ← shared filesystem         │
+│  /claude ← Claude config                │
+└─────────────────────────────────────────┘
+```
+
 ### Two-Stage Initialization
 
 ```
@@ -103,8 +128,8 @@ Then rebuild: `docker compose build && docker compose up -d`
 ┌─────────────────────────────────────────────────────────────┐
 │ Stage 2: User Execution (Unprivileged)                      │
 │ • Dynamic UID/GID mapping                                   │
+│ • Start code-server in background                           │
 │ • Privilege drop via gosu                                   │
-│ • Keep container running for interactive shell access       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -116,21 +141,24 @@ Then rebuild: `docker compose build && docker compose up -d`
 - Anthropic API (`api.anthropic.com`)
 - npm registry (`registry.npmjs.org`)
 - GitHub (dynamic IP ranges from API)
+- Open VSX (`open-vsx.org`) - VS Code extensions
 - Sentry error reporting
 - Statsig feature flags
 - DNS queries (UDP 53)
 - SSH connections (TCP 22)
 - Local network (auto-detected)
+- Port 8443 inbound (VS Code web UI)
 
 **Blocked:** All other internet destinations
 
 ### Base Image Contents
 
-Built on `node:25-bookworm-slim` (~930MB with tools):
+Built on `node:25-bookworm-slim` (~1.7GB with tools):
 
 | Category | Packages |
 |----------|----------|
 | Runtime | Node.js 25 |
+| IDE | code-server 4.96.4 (VS Code in browser) |
 | CLI Tools | Claude Code, GitHub CLI (gh) |
 | Security | iptables, ipset, dnsutils, iproute2 |
 | Development | git, vim, nano, zsh, fzf, git-delta |
