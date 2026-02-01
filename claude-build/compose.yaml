@@ -1,5 +1,6 @@
 # Claude Code with Firewall for TrueNAS Scale (Dockge)
 # Access via: docker exec -it claude-code bash
+# VS Code: http://<host>:8443 (code-server integrated in container)
 #
 # REQUIRED: Copy .env.example to .env and configure before starting
 #
@@ -10,21 +11,6 @@
 # - .env (copy from .env.example and configure)
 
 services:
-  code-server:
-    image: lscr.io/linuxserver/code-server:4.96.4
-    container_name: code-server
-    environment:
-      - PUID=${USER_UID}
-      - PGID=${USER_GID}
-      - TZ=CST
-      - PASSWORD=${SECURE_PASSWORD}
-      - DEFAULT_WORKSPACE=/config/workspace
-    volumes:
-      - ${CODE_SERVER_CONFIG_PATH}:/config
-    ports:
-      - 8443:8443
-    restart: unless-stopped
-##################################
   claude-code:
     build:
       context: .
@@ -40,14 +26,18 @@ services:
       - no-new-privileges:true
     # Security Note: Set USER_UID and USER_GID to match your TrueNAS user
     # For user creation and permission setup, see TRUENAS_SETUP.md
+    ports:
+      - 8443:8443  # VS Code web UI (code-server)
     environment:
       - CLAUDE_CONFIG_DIR=/claude
       - TERM=xterm-256color
       - USER_UID=${USER_UID}
       - USER_GID=${USER_GID}
+      - PASSWORD=${SECURE_PASSWORD}  # code-server password
     volumes:
       - ${CLAUDE_WORKSPACE_PATH}:/workspace:rw
       - ${CLAUDE_CONFIG_PATH}:/claude:rw
+      - ${CODE_SERVER_CONFIG_PATH}:/home/claude/.config/code-server:rw  # code-server settings
     working_dir: /workspace
     # Resource limits to prevent runaway processes
     deploy:

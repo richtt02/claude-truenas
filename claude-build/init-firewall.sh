@@ -74,6 +74,10 @@ iptables -A INPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
 
+# Allow inbound to code-server (port 8443) - required for web UI access
+# Authentication is handled by code-server's PASSWORD
+iptables -A INPUT -p tcp --dport 8443 -j ACCEPT
+
 # --- 5. Create ipset for allowed domains ---
 echo "Creating IP whitelist..."
 ipset create allowed-domains-tmp hash:net 2>/dev/null || ipset flush allowed-domains-tmp
@@ -97,12 +101,13 @@ else
 fi
 
 # --- 7. Resolve and add required domains ---
-# These are the domains Claude Code needs to function:
+# These are the domains Claude Code and code-server need to function:
 # - api.anthropic.com: Claude API
 # - registry.npmjs.org: npm packages
 # - sentry.io: error reporting
 # - statsig.anthropic.com: feature flags
 # - statsig.com: feature flags CDN
+# - open-vsx.org: VS Code extensions (code-server default registry)
 #
 # SECURITY NOTE: DNS IPs are resolved ONCE at container startup and cached.
 # If a domain's IP changes after startup, the firewall rules won't update.
@@ -116,6 +121,8 @@ sentry.io
 statsig.anthropic.com
 statsig.com
 o1137031.ingest.sentry.io
+open-vsx.org
+www.open-vsx.org
 "
 
 for domain in $ALLOWED_DOMAINS; do
@@ -197,6 +204,6 @@ fi
 
 echo ""
 echo "=== Firewall Active ==="
-echo "ALLOWED: GitHub, npm, Anthropic API, Sentry, Statsig, local network"
+echo "ALLOWED: GitHub, npm, Anthropic API, Sentry, Statsig, Open VSX (VS Code extensions), local network"
 echo "BLOCKED: Everything else"
 echo ""

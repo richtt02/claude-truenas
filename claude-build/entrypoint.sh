@@ -88,8 +88,19 @@ if [ -d /workspace ]; then
     chmod 755 /workspace 2>/dev/null || true
 fi
 
+# Ensure code-server directories exist with correct ownership
+mkdir -p /home/claude/.config/code-server /home/claude/.local/share/code-server
+chown -R "$USER_UID:$USER_GID" /home/claude/.config /home/claude/.local 2>/dev/null || true
+
 # Switch to the user and execute the command
 # Use the actual username to ensure proper environment setup
 # Set SHELL environment variable for Claude Code
 export SHELL=/bin/bash
+
+# Start code-server in background (as unprivileged user) if PASSWORD is set
+if [ -n "${PASSWORD:-}" ]; then
+    echo "Starting code-server on port 8443..."
+    gosu "${USER_NAME}" code-server --bind-addr 0.0.0.0:8443 --auth password /workspace &
+fi
+
 exec gosu "${USER_NAME}" "$@"

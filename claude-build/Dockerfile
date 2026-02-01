@@ -1,7 +1,7 @@
 # Custom Claude Code Container with Firewall Support
-# Based on richtt02/claude-base (Node.js 22 Debian + Claude CLI + Anthropic Tools)
+# Based on richtt02/claude-base (Node.js 25 Debian + Claude CLI + code-server + Anthropic Tools)
 
-FROM richtt02/claude-base:1.0
+FROM richtt02/claude-base:1.1
 
 USER root
 

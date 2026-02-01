@@ -6,7 +6,7 @@ FROM node:25-bookworm-slim
 # Metadata
 LABEL maintainer="richtt02"
 LABEL description="Debian-based Claude Code container with Anthropic-recommended tools and firewall support"
-LABEL version="1.0"
+LABEL version="1.1"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -72,6 +72,13 @@ RUN DELTA_VERSION="0.18.2" && \
 
 # Install Claude Code CLI globally (pinned version for reproducibility)
 RUN npm install -g @anthropic-ai/claude-code@2.1.29
+
+# Install code-server (VS Code in browser) - pinned version for reproducibility
+# Security: Downloaded over HTTPS from official code-server release
+RUN curl -fsSL https://code-server.dev/install.sh | sh -s -- --version=4.96.4
+
+# Create code-server config directory structure
+RUN mkdir -p /home/claude/.config/code-server
 
 # Configure zsh with fzf integration (lightweight, no oh-my-zsh for smaller image)
 RUN echo 'export PATH="/root/.fzf/bin:$PATH"' >> /root/.zshrc && \
