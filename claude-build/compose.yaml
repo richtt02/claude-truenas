@@ -31,6 +31,8 @@ services:
     environment:
       - CLAUDE_CONFIG_DIR=/claude
       - TERM=xterm-256color
+      - HOME=/home/claude
+      - LANG=C.UTF-8
       - USER_UID=${USER_UID}
       - USER_GID=${USER_GID}
       - PASSWORD=${SECURE_PASSWORD}  # code-server password

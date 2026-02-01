@@ -94,8 +94,11 @@ chown -R "$USER_UID:$USER_GID" /home/claude/.config /home/claude/.local 2>/dev/n
 
 # Switch to the user and execute the command
 # Use the actual username to ensure proper environment setup
-# Set SHELL environment variable for Claude Code
+# Set environment variables for Claude Code compatibility in VS Code terminal
 export SHELL=/bin/bash
+export HOME=/home/claude
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
 
 # Start code-server in background (as unprivileged user) if PASSWORD is set
 if [ -n "${PASSWORD:-}" ]; then
