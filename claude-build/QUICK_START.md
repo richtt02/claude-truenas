@@ -181,7 +181,6 @@ grep SECURE_PASSWORD .env
 ├── init-firewall.sh             ← Firewall setup
 ├── compose.yaml                 ← Docker Compose config
 ├── .env.example                 ← Environment template (copy to .env)
-├── build-base.sh                ← Base image build helper
 ├── CLAUDE.md                    ← Full documentation
 ├── IMPLEMENTATION_SUMMARY.md    ← Deployment guide
 ├── TRANSFER_GUIDE.md            ← Transfer instructions
